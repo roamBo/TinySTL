@@ -1,6 +1,6 @@
 # TinySTL
 2025.3.21  
-This is my first project of c++STL. Comments and suggestions are most welcome!
+This is my first project of c++STL and also it is my c++ study notes. Comments and suggestions are most welcome!
 
 ## Directory
 
