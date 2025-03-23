@@ -9,8 +9,11 @@
 
 
 namespace mystl{
-//perfect forwarding: Design generic libraries and scenarios that require efficient parameter passing and avoid copy operation.
-
+/*
+    perfect forwarding: 
+        Design generic libraries and scenarios that require efficient parameter passing and avoid copy operation.
+        The purpose is to preserve the type and value category(lvalue or rvalue) of parameters when writing generic functions
+*/
     //move
     //function:unconditionally convert any type of parameter to a right valued reference 
 
@@ -63,7 +66,8 @@ namespace mystl{
     
     /*
         move semantics:(It is a performance optimization, start c++11)
-        start form c++11, use right valued reference and temporary object to avoid performance loss by calling constructon function.
+        assign values to class objects containing pointer members through 'move' than 'deep copy'.(like steal)
+        use right valued reference and temporary object to avoid performance loss by calling constructon function.
 
         c++ class have :default constructor, destructor, copy constructor, copy assignment operator
                         move constructor, move assignment operator
@@ -108,6 +112,41 @@ namespace mystl{
         static_assert(!std::is_lvalue_reference<T>::value, "bad forward");
         return static_cast<T&&>(arg);
     }
+
+    //swap(use move constructor, the premise is this type have move constructor and compatible without move constructor)
+
+    template<class Tp>
+    void swap(Tp& lhs, Tp& rhs){
+        auto temp(mystl::move(lhs));//or: T temp = mystl::move(lhs); If do not have move, this operation will call copy construct function
+        lhs = mystl::move(rhs);
+        rhs = mystl::move(temp);
+    }
+
+    template<class ForwardIter1, class ForwardIter2>
+    ForwardIter2 swap_range(ForwardIter1 first1, ForwardIter1 last1, ForwardIter2 first2){
+        for(;first1 != last1;first1++, (void)first2++){
+            mystl::swap(*first1, *first2);
+        }
+        return first2;
+    }
+
+    template<class Tp, size_t N>
+    void swap(Tp (&a)[N], Tp (&b)[N]){
+        mystl::swap_range(a, a+N, b);
+    }
+    /*
+        summary 25.3.23
+            learn use move constructor to deal deep copy(decrease performance) from copy constructor
+                two concepts: move semantic, right value reference
+            
+            learn perfect forwarding
+
+            learn type convert
+
+            learn three function: move, forward, swap(use move constructor)
+
+            learn template parameter list at the previous file "type_traits.h"
+    */
 }
 
 #endif
