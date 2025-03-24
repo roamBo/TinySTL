@@ -145,8 +145,58 @@ namespace mystl{
 
             learn three function: move, forward, swap(use move constructor)
 
-            learn template parameter list at the previous file "type_traits.h"
+            learn template meta program and template parameter list at the previous file "type_traits.h"
     */
+
+    //--------------------------------------------------------------------------------------
+    //pair
+    template<class Tp1, class Tp2>
+    struct pair{
+        typedef Tp1 first_type;
+        typedef Tp2 second_type;
+
+        first_type first;
+        second_type second;
+        
+        //default constructor(use default template parameter, when instance it can be left out)
+
+        /*
+            SFINAE(a content of template meta program): substitution failure is not a error
+            when a template parameter fails to replace with an explicitly specifiied type, discard the spacialization from the overload set instead of causing compilation failure.
+        */
+        /*
+            std::enable_if<condition, void>, if condition is ture, the third parameter is void. If not, touch SFINAE, this constructor is discarded from the overload set.
+            condition: if Other1 and Other2 have default constructor is ture;
+
+            constexpr: Allow the consturction of pair objects at compile time(requiring the default constructors of members first and second to also be constexpr).
+
+            Initialization: Call the default constructors of first and second to initialize.
+
+            the third parameter uses unnamed template parameter conbine SFINAE, and avoid misuse.
+            The standard library widely uses unnamed template parameters  to implement conditional constraints.
+        */
+        template<class Other1 = Tp1, class Other2 = Tp2, typename = typename std::enable_if<std::is_default_constructible<Other1>::value && std::is_default_constructible<Other2>::value, void>::type> 
+        constexpr pair() : first(), second(){}
+
+        /*
+            constexpr and const: the value or function return value of constexpr is determined in compile time, and the value of const is determined in run time.
+        */
+        //the third parameter use non-type template parameter
+        //implicit consturctiable for this type
+        template<class U1 = Tp1, class U2 = Tp2, typename std::enable_if<std::is_copy_constructible<U1>::value && std::is_copy_constructible<U2>::value && std::is_convertible<const U1&, Tp1>::value && std::is_convertible<const U2&, Tp2>::value, int>::type = 0>
+        constexpr pair(const Tp1 &a, const Tp2 &b):first(a), second(b){}
+
+        /*
+            summary 25.3.24
+            learn default template parameter
+
+            learn SFINAE
+
+            learn constexpr
+
+            learn unnamed template parameter and non-type template parameter
+        */
+    };
 }
 
 #endif
