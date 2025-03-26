@@ -157,9 +157,6 @@ namespace mystl{
 
         first_type first;
         second_type second;
-        
-        //default constructor(use default template parameter, when instance it can be left out)
-
         /*
             SFINAE(a content of template meta program): substitution failure is not a error
             when a template parameter fails to replace with an explicitly specifiied type, discard the spacialization from the overload set instead of causing compilation failure.
@@ -175,15 +172,25 @@ namespace mystl{
             the third parameter uses unnamed template parameter conbine SFINAE, and avoid misuse.
             The standard library widely uses unnamed template parameters  to implement conditional constraints.
         */
-        template<class Other1 = Tp1, class Other2 = Tp2, typename = typename std::enable_if<std::is_default_constructible<Other1>::value && std::is_default_constructible<Other2>::value, void>::type> 
+
+        //default constructor(use default template parameter, when instance it can be left out)
+        template<class Other1 = Tp1, class Other2 = Tp2, 
+            typename = typename std::enable_if<
+            std::is_default_constructible<Other1>::value && 
+            std::is_default_constructible<Other2>::value, void>::type> 
         constexpr pair() : first(), second(){}
 
         /*
             constexpr and const: the value or function return value of constexpr is determined in compile time, and the value of const is determined in run time.
         */
         //the third parameter use non-type template parameter
-        //implicit consturctiable for this type
-        template<class U1 = Tp1, class U2 = Tp2, typename std::enable_if<std::is_copy_constructible<U1>::value && std::is_copy_constructible<U2>::value && std::is_convertible<const U1&, Tp1>::value && std::is_convertible<const U2&, Tp2>::value, int>::type = 0>
+        //implicit consturctible for this type
+        template<class U1 = Tp1, class U2 = Tp2, 
+                typename std::enable_if<
+                std::is_copy_constructible<U1>::value && 
+                std::is_copy_constructible<U2>::value && 
+                std::is_convertible<const U1&, Tp1>::value && 
+                std::is_convertible<const U2&, Tp2>::value, int>::type = 0>
         constexpr pair(const Tp1 &a, const Tp2 &b):first(a), second(b){}
 
         /*
@@ -195,6 +202,38 @@ namespace mystl{
             learn constexpr
 
             learn unnamed template parameter and non-type template parameter
+        */
+
+        //explicit  constructible for this type
+        template<class U1 = Tp1, class U2 = Tp2, 
+            typename std::enable_if<
+            std::is_copy_constructible<U1>::value &&
+            std::is_copy_constructible<u2>::value &&
+            (!std::is_convertible<const U1&, Tp1>::value ||
+             !std::is_convertible<const U2&, Tp2>::value), int>::type = 0>
+        explicit constexpr pair(const Tp1 &a, const Tp2 &b) : first(a), second(b){}
+        /*explicit: prohibit implicit conversions between class objects and prohibit implicit calls to copy constructors.*/
+        
+        
+        /*default: Remind the compiler. Although I wrote constructors with parameters also asked the compiler to generate a default constructor.*/
+        pair(const pair& rhs) = default;//copy constructor
+        pair(pair&& rhs) = default;//move constructor
+
+        //implicit constructible for other type 
+        template<class Other1, class Other2,
+            typename std::enable_if<
+            std::is_constructible<Tp1, Other1>::value &&
+            std::is_constructible<Tp2, Other2>::value &&
+            std::is_convertible<Other1&&, Tp1>::value &&
+            std::is_convertible<Other2&&, Tp2>::value, int>::type = 0>
+        constexpr pair(Other1&& a, Other2&& b): 
+                first(mystl::forward<Other1>(a)),
+                second(mystl::forward<Other2>(b)){}
+        /*
+            summary 25.3.25
+            1.explicit
+            2.default
+            3.is_copy_constructible<> from <type_trails>
         */
     };
 }
